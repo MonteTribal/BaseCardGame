@@ -1,0 +1,18 @@
+﻿<Properties>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="MonoDevelop.Default" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\CardScripts\CreatureCard.cs">
+    <Files>
+      <File FileName="Assets\Scripts\SelectionMaster.cs" Line="22" Column="4" />
+      <File FileName="Assets\Scripts\CardScripts\CreatureCard.cs" Line="119" Column="4" />
+      <File FileName="Assets\Scripts\GUIMaster.cs" Line="15" Column="3" />
+      <File FileName="Assets\Scripts\CardScripts\SpellCard.cs" Line="53" Column="45" />
+      <File FileName="Assets\Scripts\CardScripts\Card.cs" Line="137" Column="59" />
+      <File FileName="Assets\Cards\TestCards\TestCreatureFieldEnterEffect\TestCreatureFieldEnterEffect.cs" Line="9" Column="69" />
+      <File FileName="Assets\Scripts\CardScripts\FieldDisplayGrave.cs" Line="25" Column="42" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>

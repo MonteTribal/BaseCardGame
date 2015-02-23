@@ -86,6 +86,7 @@ public class GameMaster : MonoBehaviour {
    	 	}
 		else if(currentPhase == turnPhases.PostAttack)
 		{
+			GetComponent<GUIMaster>().forceCloseBox();
 			currentPhase = 0;
 
 			currentPlayer++;

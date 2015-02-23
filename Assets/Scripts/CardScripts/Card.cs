@@ -15,7 +15,7 @@ public class Card : MonoBehaviour {
 	public float slideSpeed = 50f;
 
 	public enum CardTypes{Creature, Spell, FieldMarker};
-	public CardTypes cardType = CardTypes.Creature;
+	protected CardTypes cardType = CardTypes.Creature;
 
 	private Vector3 target;
 	private bool moveTo = false;
@@ -27,16 +27,18 @@ public class Card : MonoBehaviour {
 	public int cost = 1;
 	public GUISkin skin;
 
-	public GameObject gm;
-	public Resources myStuff;
+	protected GameObject gm;
+	protected Resources myStuff;
 	//[HideInInspector]
 	public enum gameZones{Deck, Hand, Field, Grave};
 	//[HideInInspector]
 	public gameZones zone = gameZones.Deck;
 
+	protected bool showGuiOptions = false; // so, i forgot that protected was a thing. so there might be some redundant code somewhere.
+	public string popupText;
 
 	// Use this for initialization
-	public virtual void Start () {
+	protected virtual void Start () {
 		//int a = Random.Range(-100, 100);
 		//myname = a.ToString();
 
@@ -45,7 +47,7 @@ public class Card : MonoBehaviour {
 	}
 
 	// Update is called once per frame
-	public virtual void Update () 
+	protected virtual void Update () 
 	{
 		if(moveTo)
 		{
@@ -65,7 +67,7 @@ public class Card : MonoBehaviour {
 
 	}
 
-	public virtual void OnMouseEnter()
+	protected virtual void OnMouseEnter()
 	{
 		if(!scaledUp)
 		{
@@ -75,7 +77,7 @@ public class Card : MonoBehaviour {
 		}
 	}
 
-	public virtual void OnMouseExit()
+	protected virtual void OnMouseExit()
 	{
 		if(scaledUp)
 		{
@@ -85,18 +87,18 @@ public class Card : MonoBehaviour {
 		}
 	}
 
-	public virtual void OnMouseDown()
+	protected virtual void OnMouseDown()
 	{
 		//Debug.Log("Base Card click");
 		gm.GetComponent<SelectionMaster>().setSelected(this.gameObject);
 	}
 
-	public virtual void OnMouseUp()
+	protected virtual void OnMouseUp()
 	{
-		//Debug.Log("Base Card Click-Up");
+		//Debug.Log("Base Card Click-Up");this.game
 	}
 
-	public virtual void cast()
+	protected virtual void cast()
 	{
 		//Debug.Log("Base Card cast");
 	}
@@ -126,4 +128,14 @@ public class Card : MonoBehaviour {
 		}
 		return false;
 	}
+
+	public void closePopups()
+	{
+		if(showGuiOptions)
+		{
+			showGuiOptions = false;
+			gm.GetComponent<GUIMaster>().closeBox(this.gameObject);
+		}
+	}
+
 }

@@ -5,7 +5,7 @@ public class FieldDisplayCard : Card {
 
 	public bool display;
 
-	public override void Start()
+	protected override void Start()
 	{
 		base.Start();
 	}

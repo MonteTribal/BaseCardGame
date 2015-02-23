@@ -3,35 +3,35 @@ using System.Collections;
 
 public class FieldDisplayGrave : FieldDisplayCard {
 
-	public override void OnMouseEnter ()
+	protected override void OnMouseEnter ()
 	{
 		return;
 	}
 	
-	public override void OnMouseDown ()
+	protected override void OnMouseDown ()
 	{
 		if(gm.GetComponent<GUIMaster>().canOpenNewBox())
 		{
 			display = true;
-			gm.GetComponent<GUIMaster>().openNewBox(GUIMaster.displayTypes.List);
+			gm.GetComponent<GUIMaster>().openNewBox(GUIMaster.displayTypes.List, this.gameObject);
 		}
 	}
 
-	public override void OnMouseUp ()
+	protected override void OnMouseUp ()
 	{
 		if(gm.GetComponent<GUIMaster>().currentlyDisplaying == GUIMaster.displayTypes.List)
 		{
 			display = false;
-			gm.GetComponent<GUIMaster>().closeBox();
+			gm.GetComponent<GUIMaster>().closeBox(this.gameObject);
 		}
 	}
 
-	public override void OnMouseExit ()
+	protected override void OnMouseExit ()
 	{
 		return;
 	}
 
-	public override void Update ()
+	protected override void Update ()
 	{
 		base.Update ();
 	}
@@ -47,12 +47,14 @@ public class FieldDisplayGrave : FieldDisplayCard {
 				Rect listBox = new Rect (4, GUIBox.height/10, GUIBox.width-8, GUIBox.height*9/10-4);
 				GUI.BeginGroup(listBox);
 				{
-					GUI.Box(new Rect(0, 0, listBox.width, listBox.height), "");
+					string cardsInGrave = "";
 
 					foreach(GameObject card in myStuff.grave)
 					{
-						Debug.Log("HOW DO I SHOW CARDS?!");
+						cardsInGrave += card.name + '\n';
 					}
+
+					GUI.Box(new Rect(0, 0, listBox.width, listBox.height), "");
 
 				}
 				GUI.EndGroup();

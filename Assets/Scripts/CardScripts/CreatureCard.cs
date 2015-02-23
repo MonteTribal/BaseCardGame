@@ -5,6 +5,7 @@
 
 using UnityEngine;
 using System.Collections;
+using System;
 
 public class CreatureCard : Card {
 
@@ -13,21 +14,21 @@ public class CreatureCard : Card {
 	public enum EffectTypes{OnAttack, OnDeath, OnActivate, OnEnter, OnTurnStart, OnTurnEnd, None};
 	public EffectTypes effectType = EffectTypes.None;
 
-	private bool hasBeenCast = false;
-	private bool canAttack = false;
-	private bool canActivate = false;
-	private bool isExhausted = false;
+	protected bool hasBeenCast = false;
+	protected bool canAttack = false;
+	protected bool canActivate = false;
+	protected bool isExhausted = false;
 
-	private bool showGuiOptions = false;
+	private bool waitingOnTarget = false;
 
-	public string popupText;
+	private CardTypes[] attackTargets = new CardTypes[2] {CardTypes.Creature, CardTypes.FieldMarker};
 
-	public override void Start ()
+	protected override void Start ()
 	{
 		base.Start ();
 	}
 
-	public override void OnMouseDown ()
+	protected override void OnMouseDown ()
 	{
 		if(transform.root.name != "Player") //you cant play your opponenets spells! ..silly..
 		{
@@ -49,15 +50,17 @@ public class CreatureCard : Card {
 				base.OnMouseExit();
 			}
 		}*/
+
 		if(gm.GetComponent<GUIMaster>().canOpenNewBox())
 		{
+			gm.GetComponent<GUIMaster>().openNewBox(GUIMaster.displayTypes.Card, this.gameObject);
 			showGuiOptions = true;
 			gm.GetComponent<GameMaster>().fieldFocus = false;
 			base.OnMouseExit();
 		}
 	}
 
-	public override void OnMouseEnter()
+	protected override void OnMouseEnter()
 	{
 		if(gm.GetComponent<GameMaster>().fieldFocus == false)
 		{
@@ -67,7 +70,7 @@ public class CreatureCard : Card {
 		//GUI- show effects?
 	}
 
-	public override void OnMouseExit()
+	protected override void OnMouseExit()
 	{
 		if(gm.GetComponent<GameMaster>().fieldFocus == false)
 		{
@@ -78,7 +81,7 @@ public class CreatureCard : Card {
 	}
 
 
-	public override void cast()
+	protected override void cast()
 	{
 		if(canCast())
 		{
@@ -98,8 +101,38 @@ public class CreatureCard : Card {
 		}
 	}
 
-	public void attack()
+	protected void attack()
 	{
+		waitingOnTarget = true;
+
+		gm.GetComponent<SelectionMaster>().getNewTarget( attackTargets );
+
+		GameObject target = null;
+
+		while(waitingOnTarget)
+		{
+			target = gm.GetComponent<SelectionMaster>().getTarget();
+			if(target != null)
+			{
+				waitingOnTarget = false;
+			}
+		}
+
+		if(target.GetComponent<CreatureCard>())
+		{
+			int targetOrigStamina = target.GetComponent<CreatureCard>().stamina;
+			target.GetComponent<CreatureCard>().stamina -= stamina;
+			stamina -= targetOrigStamina;
+		}
+		else if(target.GetComponent<Resources>())
+		{
+			target.GetComponent<Resources>().health -= stamina;
+		}
+		else
+		{
+			Debug.LogException(new Exception("This shouldn't be possible... Invalid target for attack"));
+		}
+
 		exhaust();
 		if(effectType == EffectTypes.OnAttack)
 		{
@@ -107,10 +140,12 @@ public class CreatureCard : Card {
 		}
 	}
 
-	public void exhaust()
+	protected void exhaust()
 	{
 		transform.RotateAround(transform.position, Vector3.back, 30f);
 		canAttack = false;
+		canActivate = false;
+		isExhausted = true;
 	}
 
 	public virtual void refresh()
@@ -123,10 +158,11 @@ public class CreatureCard : Card {
 		if(isExhausted)
 		{
 			transform.RotateAround(transform.position, Vector3.back, -30f);
+			isExhausted = false;
 		}
 	}
 
-	public void kill()
+	protected void kill()
 	{
 		if(effectType == EffectTypes.OnDeath)
 		{
@@ -178,7 +214,7 @@ public class CreatureCard : Card {
 			Rect EffectBox = new Rect(Screen.width/2 - (Screen.width/3)/2, Screen.height/2 - (Screen.height/3)/2, Screen.width/3, Screen.height/3);
 			GUI.BeginGroup(EffectBox);
 			{
-				GUI.Box (new Rect(0, 0, EffectBox.width, EffectBox.height) ,"BOX");
+				GUI.Box (new Rect(0, 0, EffectBox.width, EffectBox.height) , myname);
 				GUI.Box (new Rect(0, EffectBox.height/10, EffectBox.width, EffectBox.height/2), popupText, skin.box);
 				GUI.Box (new Rect(0, EffectBox.height*6/10, EffectBox.width, EffectBox.height/10), "Stamina: " + stamina.ToString());
 
@@ -188,40 +224,44 @@ public class CreatureCard : Card {
 					if(GUI.Button(new Rect(0, EffectBox.height*3/4, EffectBox.width, EffectBox.height/4), "Cast " + myname))
 					{
 						cast();
-						GameObject.Find("GameMaster").GetComponent<GameMaster>().fieldFocus = true;		
+						gm.GetComponent<GameMaster>().fieldFocus = true;		
 						showGuiOptions = false;
+						gm.GetComponent<GUIMaster>().closeBox(this.gameObject);
 					}
 				}
-				else if(hasBeenCast && GameObject.Find("GameMaster").GetComponent<GameMaster>().currentPhase == GameMaster.turnPhases.Setup)
+				else if(hasBeenCast && gm.GetComponent<GameMaster>().currentPhase == GameMaster.turnPhases.Setup)
 				{
 					if(effectType == EffectTypes.OnActivate && canActivate)
 					{
 						if(GUI.Button(new Rect(0, EffectBox.height*3/4, EffectBox.width, EffectBox.height/4), "Activate Effect"))
 						{
 							OnActivateSkill();
-							GameObject.Find("GameMaster").GetComponent<GameMaster>().fieldFocus = true;		
+							gm.GetComponent<GameMaster>().fieldFocus = true;		
 							showGuiOptions = false;
+							gm.GetComponent<GUIMaster>().closeBox(this.gameObject);
 						}
 					}
 					else if(effectType == EffectTypes.OnActivate)
 					{
-						GUI.Box(new Rect(0, EffectBox.height*3/4, EffectBox.width, EffectBox.height/4), "Effect has been used");
+						GUI.Box(new Rect(0, EffectBox.height*3/4, EffectBox.width, EffectBox.height/4), "Effect cannot be used");
 					}
 				}
-				else if(GameObject.Find("GameMaster").GetComponent<GameMaster>().currentPhase == GameMaster.turnPhases.Attack && canAttack)
+				else if(gm.GetComponent<GameMaster>().currentPhase == GameMaster.turnPhases.Attack && canAttack)
 				{
 					if(GUI.Button(new Rect(0, EffectBox.height*3/4, EffectBox.width, EffectBox.height/4), "ATTACK!"))
 					{
 						attack();
-						GameObject.Find("GameMaster").GetComponent<GameMaster>().fieldFocus = true;		
+						gm.GetComponent<GameMaster>().fieldFocus = true;		
 						showGuiOptions = false;
+						//pop up says "Choose attack target"
 					}
 				}
 
 				if(GUI.Button(new Rect(EffectBox.width*9/10, EffectBox.height*0, EffectBox.width/10, EffectBox.height/10), "X"))
 				{
-					GameObject.Find("GameMaster").GetComponent<GameMaster>().fieldFocus = true;
+					gm.GetComponent<GameMaster>().fieldFocus = true;
 					showGuiOptions = false;
+					gm.GetComponent<GUIMaster>().closeBox(this.gameObject);
 				}
 			}
 			GUI.EndGroup();
