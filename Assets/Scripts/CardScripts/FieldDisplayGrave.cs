@@ -2,6 +2,7 @@
 using System.Collections;
 
 public class FieldDisplayGrave : FieldDisplayCard {
+	
 
 	protected override void OnMouseEnter ()
 	{

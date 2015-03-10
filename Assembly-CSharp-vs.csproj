@@ -51,6 +51,7 @@
      <Compile Include="Assets\Scripts\CardScripts\Card.cs" />
      <Compile Include="Assets\Scripts\CardScripts\CreatureCard.cs" />
      <Compile Include="Assets\Scripts\CardScripts\FieldDisplayCard.cs" />
+     <Compile Include="Assets\Scripts\CardScripts\FieldDisplayDeck.cs" />
      <Compile Include="Assets\Scripts\CardScripts\FieldDisplayGrave.cs" />
      <Compile Include="Assets\Scripts\CardScripts\SpellCard.cs" />
      <Compile Include="Assets\Scripts\Dealer.cs" />

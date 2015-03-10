@@ -21,8 +21,9 @@ public class CreatureCard : Card {
 
 	private bool waitingOnTarget = false;
 
-	private CardTypes[] attackTargets = new CardTypes[2] {CardTypes.Creature, CardTypes.FieldMarker};
+	private CardTypes[] attackTargets = new CardTypes[2] {CardTypes.Creature, CardTypes.FieldMarkerPlayer};
 
+	//--- mono functions ---
 	protected override void Start ()
 	{
 		base.Start ();
@@ -30,26 +31,11 @@ public class CreatureCard : Card {
 
 	protected override void OnMouseDown ()
 	{
+		base.OnMouseDown();
 		if(transform.root.name != "Player") //you cant play your opponenets spells! ..silly..
 		{
 			return;
 		}
-
-		/*
-		if(!hasBeenCast)
-		{
-			cast();
-		}
-		else if(canAttack)
-		{
-			if(effectType == EffectTypes.OnActivate)
-			{
-				//OnActivateSkill();
-				showGuiOptions = true;
-				GameObject.Find("GameMaster").GetComponent<GameMaster>().fieldFocus = false;
-				base.OnMouseExit();
-			}
-		}*/
 
 		if(gm.GetComponent<GUIMaster>().canOpenNewBox())
 		{
@@ -67,6 +53,7 @@ public class CreatureCard : Card {
 			return;
 		}
 		base.OnMouseEnter();
+		gm.GetComponent<SelectionMaster>().setPotential(this.gameObject, attackTargets );
 		//GUI- show effects?
 	}
 
@@ -80,7 +67,16 @@ public class CreatureCard : Card {
 		//hide effects
 	}
 
+	protected override void Update ()
+	{
+		base.Update ();
+		if(stamina <= 0)
+		{
+			kill();
+		}
+	}
 
+	// --- creature card specific functions ---
 	protected override void cast()
 	{
 		if(canCast())
@@ -101,32 +97,64 @@ public class CreatureCard : Card {
 		}
 	}
 
-	protected void attack()
+	protected IEnumerator attack()
 	{
-		waitingOnTarget = true;
+		//Debug.Log("In attack");
 
-		gm.GetComponent<SelectionMaster>().getNewTarget( attackTargets );
+		if(!gm.GetComponent<SelectionMaster>().getNewTarget(attackTargets, this.gameObject))
+		{
+			Debug.Log(myname + " forced closed a box to attack");
+			gm.GetComponent<GUIMaster>().forceCloseBox(this.gameObject);
+			if(!gm.GetComponent<SelectionMaster>().getNewTarget(attackTargets, this.gameObject))
+			{
+				Debug.LogException(new Exception("Could not open box so " + myname + "  could attack a new target"));
+				yield break; //if false, then this fails. should do more here
+			}										
+		}
 
 		GameObject target = null;
+		waitingOnTarget = true;
 
 		while(waitingOnTarget)
 		{
 			target = gm.GetComponent<SelectionMaster>().getTarget();
 			if(target != null)
 			{
-				waitingOnTarget = false;
+				if(target.GetComponent<CreatureCard>())
+				{
+					if(!target.GetComponent<CreatureCard>().hasBeenCast)
+					{
+						target = null;
+						yield return 0;
+						continue;
+					}
+					waitingOnTarget = false;
+				}
+
 			}
+			Debug.Log(myname + " is in attack...");
+			/*if(Input.GetKeyDown(KeyCode.Space))
+			{
+				break;
+			}*/
+			yield return 0;
 		}
+
 
 		if(target.GetComponent<CreatureCard>())
 		{
 			int targetOrigStamina = target.GetComponent<CreatureCard>().stamina;
 			target.GetComponent<CreatureCard>().stamina -= stamina;
-			stamina -= targetOrigStamina;
+			if(!target.GetComponent<CreatureCard>().getIsExhausted())
+			{
+				stamina -= targetOrigStamina;
+			}
+			gm.GetComponent<SelectionMaster>().targetAquired(this.gameObject);		
 		}
-		else if(target.GetComponent<Resources>())
+		else if(target.GetComponent<FieldDisplayDeck>())
 		{
-			target.GetComponent<Resources>().health -= stamina;
+			target.transform.root.GetComponent<Resources>().health -= stamina;
+			gm.GetComponent<SelectionMaster>().targetAquired(this.gameObject);
 		}
 		else
 		{
@@ -138,6 +166,8 @@ public class CreatureCard : Card {
 		{
 			OnAttackSkill();
 		}
+
+		yield break;
 	}
 
 	protected void exhaust()
@@ -146,6 +176,11 @@ public class CreatureCard : Card {
 		canAttack = false;
 		canActivate = false;
 		isExhausted = true;
+	}
+
+	public bool getIsExhausted()
+	{
+		return isExhausted;
 	}
 
 	public virtual void refresh()
@@ -207,9 +242,10 @@ public class CreatureCard : Card {
 		popupText = text;
 	}
 
+	// --- GUI functions ---
 	void OnGUI()
 	{
-		if(showGuiOptions)
+		if(showGuiOptions) //this is why changing phases doesnt close the gui...
 		{
 			Rect EffectBox = new Rect(Screen.width/2 - (Screen.width/3)/2, Screen.height/2 - (Screen.height/3)/2, Screen.width/3, Screen.height/3);
 			GUI.BeginGroup(EffectBox);
@@ -218,50 +254,52 @@ public class CreatureCard : Card {
 				GUI.Box (new Rect(0, EffectBox.height/10, EffectBox.width, EffectBox.height/2), popupText, skin.box);
 				GUI.Box (new Rect(0, EffectBox.height*6/10, EffectBox.width, EffectBox.height/10), "Stamina: " + stamina.ToString());
 
-
-				if(!hasBeenCast && canCast())
+				if(gm.GetComponent<GameMaster>().getCurrentPlayer() == myStuff.playerID)
 				{
-					if(GUI.Button(new Rect(0, EffectBox.height*3/4, EffectBox.width, EffectBox.height/4), "Cast " + myname))
+					//if in your hand and can cast creature
+					if(!hasBeenCast && canCast())
 					{
-						cast();
-						gm.GetComponent<GameMaster>().fieldFocus = true;		
-						showGuiOptions = false;
-						gm.GetComponent<GUIMaster>().closeBox(this.gameObject);
-					}
-				}
-				else if(hasBeenCast && gm.GetComponent<GameMaster>().currentPhase == GameMaster.turnPhases.Setup)
-				{
-					if(effectType == EffectTypes.OnActivate && canActivate)
-					{
-						if(GUI.Button(new Rect(0, EffectBox.height*3/4, EffectBox.width, EffectBox.height/4), "Activate Effect"))
+						if(GUI.Button(new Rect(0, EffectBox.height*3/4, EffectBox.width, EffectBox.height/4), "Cast " + myname))
 						{
-							OnActivateSkill();
+							cast();
 							gm.GetComponent<GameMaster>().fieldFocus = true;		
-							showGuiOptions = false;
-							gm.GetComponent<GUIMaster>().closeBox(this.gameObject);
+							closePopups();
 						}
 					}
-					else if(effectType == EffectTypes.OnActivate)
+					//if on the field, during setup phase, and has an effect
+					else if(hasBeenCast && gm.GetComponent<GameMaster>().currentPhase == GameMaster.turnPhases.Setup)
 					{
-						GUI.Box(new Rect(0, EffectBox.height*3/4, EffectBox.width, EffectBox.height/4), "Effect cannot be used");
+						if(effectType == EffectTypes.OnActivate && canActivate)
+						{
+							if(GUI.Button(new Rect(0, EffectBox.height*3/4, EffectBox.width, EffectBox.height/4), "Activate Effect"))
+							{
+								OnActivateSkill();
+								gm.GetComponent<GameMaster>().fieldFocus = true;		
+								closePopups();
+							}
+						}
+						else if(effectType == EffectTypes.OnActivate)
+						{
+							GUI.Box(new Rect(0, EffectBox.height*3/4, EffectBox.width, EffectBox.height/4), "Effect cannot be used");
+						}
 					}
-				}
-				else if(gm.GetComponent<GameMaster>().currentPhase == GameMaster.turnPhases.Attack && canAttack)
-				{
-					if(GUI.Button(new Rect(0, EffectBox.height*3/4, EffectBox.width, EffectBox.height/4), "ATTACK!"))
+					else if(hasBeenCast && gm.GetComponent<GameMaster>().currentPhase == GameMaster.turnPhases.Attack && canAttack)
 					{
-						attack();
-						gm.GetComponent<GameMaster>().fieldFocus = true;		
-						showGuiOptions = false;
-						//pop up says "Choose attack target"
+						if(GUI.Button(new Rect(0, EffectBox.height*3/4, EffectBox.width, EffectBox.height/4), "ATTACK!"))
+						{
+							gm.GetComponent<GameMaster>().fieldFocus = true;		
+							closePopups();
+							//need to close popup *before* attacking
+							StartCoroutine("attack");
+							//pop up says "Choose attack target"
+						}
 					}
-				}
-
-				if(GUI.Button(new Rect(EffectBox.width*9/10, EffectBox.height*0, EffectBox.width/10, EffectBox.height/10), "X"))
-				{
-					gm.GetComponent<GameMaster>().fieldFocus = true;
-					showGuiOptions = false;
-					gm.GetComponent<GUIMaster>().closeBox(this.gameObject);
+					//escape button
+					if(GUI.Button(new Rect(EffectBox.width*9/10, EffectBox.height*0, EffectBox.width/10, EffectBox.height/10), "X"))
+					{
+						gm.GetComponent<GameMaster>().fieldFocus = true;
+						closePopups();
+					}
 				}
 			}
 			GUI.EndGroup();

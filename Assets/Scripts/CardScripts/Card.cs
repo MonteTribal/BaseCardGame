@@ -14,7 +14,7 @@ public class Card : MonoBehaviour {
 
 	public float slideSpeed = 50f;
 
-	public enum CardTypes{Creature, Spell, FieldMarker};
+	public enum CardTypes{Creature, Spell, FieldMarkerPlayer};
 	protected CardTypes cardType = CardTypes.Creature;
 
 	private Vector3 target;
@@ -84,6 +84,7 @@ public class Card : MonoBehaviour {
 			transform.localScale = new Vector3(transform.localScale.x/2f, transform.localScale.y/2f, transform.localScale.z/2f);
 			transform.Translate( new Vector3(0f, 0f, .2f));
 			scaledUp = false;
+			gm.GetComponent<SelectionMaster>().clearPotential();
 		}
 	}
 
@@ -122,7 +123,9 @@ public class Card : MonoBehaviour {
 
 	public bool canCast()
 	{
-		if(transform.parent.root.GetComponent<Resources>().essence >= cost)
+		if(transform.parent.root.GetComponent<Resources>().essence >= cost &&
+		   gm.GetComponent<GameMaster>().getCurrentPhase() == GameMaster.turnPhases.Setup &&
+		   gm.GetComponent<GameMaster>().getCurrentPlayer() == myStuff.playerID)
 		{
 			return true;
 		}
@@ -136,6 +139,11 @@ public class Card : MonoBehaviour {
 			showGuiOptions = false;
 			gm.GetComponent<GUIMaster>().closeBox(this.gameObject);
 		}
+	}
+
+	public CardTypes getCardType()
+	{
+		return cardType;
 	}
 
 }

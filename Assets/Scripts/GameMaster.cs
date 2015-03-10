@@ -44,13 +44,13 @@ public class GameMaster : MonoBehaviour {
 		try{
 			otherPlayer = players[currentPlayer+1];
 		}
-		catch(Exception e){
+		catch{
 			otherPlayer = players[0];
 		}
 
 		if(currentPhase == turnPhases.PreDraw) //or == 0
 		{
-			Debug.Log("Time for player " + currentPlayer.ToString() + " to start.");
+			//Debug.Log("Time for player " + currentPlayer.ToString() + " to start.");
 			//for when creatures have OnTurnStart effects. currently none
 			currentPhase += 1;
 			thisPlayer.GetComponent<Resources>().addEssence(thisPlayer.GetComponent<Resources>().turnCount);
@@ -78,7 +78,7 @@ public class GameMaster : MonoBehaviour {
     	}
 		else if(currentPhase == turnPhases.Attack)
 		{
-			Debug.Log("Time for player " + currentPlayer.ToString() + " to attack things.");
+			//Debug.Log("Time for player " + currentPlayer.ToString() + " to attack things.");
 			if(Input.GetKeyDown(KeyCode.Space))
 			{
 				currentPhase += 1;
@@ -86,7 +86,10 @@ public class GameMaster : MonoBehaviour {
    	 	}
 		else if(currentPhase == turnPhases.PostAttack)
 		{
-			GetComponent<GUIMaster>().forceCloseBox();
+			if(!GetComponent<GUIMaster>().canOpenNewBox())
+			{
+				GetComponent<GUIMaster>().forceCloseBox(this.gameObject);
+			}
 			currentPhase = 0;
 
 			currentPlayer++;

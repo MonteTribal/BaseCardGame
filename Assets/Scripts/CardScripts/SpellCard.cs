@@ -10,12 +10,11 @@ public class SpellCard : Card {
 	
 	protected override void OnMouseDown ()
 	{
-		/*
-		if(canCast())
+		base.OnMouseDown();
+		if(transform.root.name != "Player") //you cant play your opponenets spells! ..silly..
 		{
-			cast();
+			return;
 		}
-		*/
 
 		if(gm.GetComponent<GUIMaster>().canOpenNewBox())
 		{

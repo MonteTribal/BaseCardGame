@@ -16,7 +16,7 @@ public class GUIMaster : MonoBehaviour {
 		return !boxOpen;
 	}
 
-	public void openNewBox(displayTypes boxType, GameObject openerObject)
+	public void openNewBox(displayTypes boxType, GameObject openerObject) // i guess I could have this return true/false, for-going the if-blocks around calling this in other files
 	{
 		if(canOpenNewBox())
 		{
@@ -26,7 +26,7 @@ public class GUIMaster : MonoBehaviour {
 		}
 	}
 
-	public void closeBox(GameObject closer)
+	public bool closeBox(GameObject closer)
 	{
 		//Can only be called by Object who is currently displaying a GUI. It closes it's GUI
 		if(objectWhoIsDisplaying == closer)
@@ -34,6 +34,12 @@ public class GUIMaster : MonoBehaviour {
 			boxOpen = false;
 			currentlyDisplaying = displayTypes.None;
 			objectWhoIsDisplaying = null;
+			return true;
+		}
+		else
+		{
+			Debug.Log(closer.name + " tried to close a box hold open by " + objectWhoIsDisplaying.name);
+			return false;
 		}
 	}
 
@@ -46,10 +52,15 @@ public class GUIMaster : MonoBehaviour {
 		}
 	}
 
-	public void forceCloseBox()
+	public void forceCloseBox(GameObject closer)
 	{
+		Debug.Log(closer.name + " forced a box hold open by " + objectWhoIsDisplaying.name + " to close.");
 		boxOpen = false;
 		currentlyDisplaying = displayTypes.None;
+		if(objectWhoIsDisplaying.GetComponent<CreatureCard>())
+		{
+			objectWhoIsDisplaying.GetComponent<CreatureCard>().closePopups();
+		}
 		objectWhoIsDisplaying = null;
 	}
 
