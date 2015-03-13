@@ -7,7 +7,13 @@ using UnityEngine;
 using System.Collections;
 
 public class SpellCard : Card {
-	
+
+	protected override void Start ()
+	{
+		base.Start ();
+		cardType = CardTypes.Spell;
+	}
+
 	protected override void OnMouseDown ()
 	{
 		base.OnMouseDown();

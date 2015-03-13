@@ -53,7 +53,10 @@ public class CreatureCard : Card {
 			return;
 		}
 		base.OnMouseEnter();
-		gm.GetComponent<SelectionMaster>().setPotential(this.gameObject, attackTargets );
+		if(hasBeenCast)
+		{
+			gm.GetComponent<SelectionMaster>().setPotential(this.gameObject, attackTargets );
+		}
 		//GUI- show effects?
 	}
 
@@ -120,13 +123,31 @@ public class CreatureCard : Card {
 			target = gm.GetComponent<SelectionMaster>().getTarget();
 			if(target != null)
 			{
-				if(target.GetComponent<CreatureCard>())
+				if(target == this.gameObject)
+				{
+					target = null;
+					yield return 0;
+					continue;
+				}
+				else if(target.GetComponent<CreatureCard>())
 				{
 					if(!target.GetComponent<CreatureCard>().hasBeenCast)
 					{
 						target = null;
 						yield return 0;
 						continue;
+					}
+					if(effectType == EffectTypes.OnAttack)
+					{
+						OnAttackSkill();
+					}
+					waitingOnTarget = false;
+				}
+				else if(target.GetComponent<FieldDisplayDeck>())
+				{
+					if(effectType == EffectTypes.OnAttack)
+					{
+						OnAttackSkill();
 					}
 					waitingOnTarget = false;
 				}
@@ -162,10 +183,6 @@ public class CreatureCard : Card {
 		}
 
 		exhaust();
-		if(effectType == EffectTypes.OnAttack)
-		{
-			OnAttackSkill();
-		}
 
 		yield break;
 	}
@@ -252,7 +269,7 @@ public class CreatureCard : Card {
 			{
 				GUI.Box (new Rect(0, 0, EffectBox.width, EffectBox.height) , myname);
 				GUI.Box (new Rect(0, EffectBox.height/10, EffectBox.width, EffectBox.height/2), popupText, skin.box);
-				GUI.Box (new Rect(0, EffectBox.height*6/10, EffectBox.width, EffectBox.height/10), "Stamina: " + stamina.ToString());
+				GUI.Box (new Rect(0, EffectBox.height*6/10, EffectBox.width, EffectBox.height/10), "Cost: " + cost.ToString() + " Stamina: " + stamina.ToString());
 
 				if(gm.GetComponent<GameMaster>().getCurrentPlayer() == myStuff.playerID)
 				{

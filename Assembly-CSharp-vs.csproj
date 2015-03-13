@@ -48,6 +48,8 @@
   <ItemGroup>
      <Compile Include="Assets\Cards\TestCards\TestCreatureActivateEffect\TestCreatureActivateEffect.cs" />
      <Compile Include="Assets\Cards\TestCards\TestCreatureFieldEnterEffect\TestCreatureFieldEnterEffect.cs" />
+     <Compile Include="Assets\Cards\TestCards\TestCreatureOnAttackEffect\TestCreatureOnAttackEffect.cs" />
+     <Compile Include="Assets\Cards\TestCards\TestCreatureOnTurnStartEffect\TestCreatureOnTurnStartEffect.cs" />
      <Compile Include="Assets\Scripts\CardScripts\Card.cs" />
      <Compile Include="Assets\Scripts\CardScripts\CreatureCard.cs" />
      <Compile Include="Assets\Scripts\CardScripts\FieldDisplayCard.cs" />
